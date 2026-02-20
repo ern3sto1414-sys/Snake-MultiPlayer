@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Snake Multiplayer - Ernesto Josiah</title>
     <style>
         body { 
@@ -11,7 +11,8 @@
             text-align: center; 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
-            overflow: hidden; /* Para que no salgan barras de scroll */
+            overflow: hidden; 
+            touch-action: none; /* Evita que el cel se mueva al jugar */
         }
         h1 { 
             margin: 10px 0; 
@@ -33,9 +34,44 @@
             box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
             display: block;
             margin: 0 auto;
-            max-width: 95vw; /* Se ajusta al ancho de tu PC */
-            max-height: 70vh; /* Se ajusta al alto para dejar espacio al título */
+            max-width: 95vw;
+            max-height: 50vh; /* Bajamos un poco el alto para que quepan los botones */
         }
+
+        /* --- ESTILOS DE CONTROLES TÁCTILES --- */
+        #mobile-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-top: 20px;
+            gap: 10px;
+            user-select: none;
+        }
+        .row { display: flex; gap: 20px; }
+        .btn {
+            width: 65px;
+            height: 65px;
+            background: rgba(255, 215, 0, 0.1);
+            border: 2px solid gold;
+            border-radius: 50%;
+            color: gold;
+            font-size: 25px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            touch-action: manipulation;
+        }
+        .btn:active {
+            background: gold;
+            color: black;
+        }
+
+        /* Ocultar botones en PC (Dell Studio) */
+        @media (pointer: fine) {
+            #mobile-controls { display: none; }
+        }
+
         .controls-hint {
             margin-top: 10px;
             font-size: 0.8em;
@@ -49,9 +85,45 @@
     
     <canvas id="gameCanvas" width="800" height="600"></canvas>
     
-    <div class="controls-hint">Usa WASD o Flechas para moverte | No toques a otros jugadores</div>
+    <div id="mobile-controls">
+        <div class="row">
+            <button class="btn" id="btn-up">▲</button>
+        </div>
+        <div class="row">
+            <button class="btn" id="btn-left">◀</button>
+            <button class="btn" id="btn-right">▶</button>
+        </div>
+        <div class="row">
+            <button class="btn" id="btn-down">▼</button>
+        </div>
+    </div>
+
+    <div class="controls-hint">Usa WASD, Flechas o los botones táctiles</div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="snake.js"></script>
+
+    <script>
+        // Conexión para los botones móviles
+        // Usamos un intervalo pequeño para asegurar que socket.io ya cargó
+        const interval = setInterval(() => {
+            if (typeof socket !== 'undefined') {
+                const setupBtn = (id, dir) => {
+                    const btn = document.getElementById(id);
+                    btn.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        socket.emit('direction', dir);
+                    });
+                };
+
+                setupBtn('btn-up', 'UP');
+                setupBtn('btn-down', 'DOWN');
+                setupBtn('btn-left', 'LEFT');
+                setupBtn('btn-right', 'RIGHT');
+                
+                clearInterval(interval);
+            }
+        }, 500);
+    </script>
 </body>
 </html>
