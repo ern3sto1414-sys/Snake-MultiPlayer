@@ -12,7 +12,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             overflow: hidden; 
-            touch-action: none; /* Evita que el cel se mueva al jugar */
+            touch-action: none; 
         }
         h1 { 
             margin: 10px 0; 
@@ -35,16 +35,20 @@
             display: block;
             margin: 0 auto;
             max-width: 95vw;
-            max-height: 50vh; /* Bajamos un poco el alto para que quepan los botones */
+            max-height: 80vh; /* Grande para PC */
         }
 
-        /* --- ESTILOS DE CONTROLES TÁCTILES --- */
+        @media (max-width: 768px) {
+            canvas { max-height: 45vh; } /* Pequeño para Celular */
+            h1 { font-size: 1.4em; }
+        }
+
         #mobile-controls {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            margin-top: 20px;
+            margin-top: 15px;
             gap: 10px;
             user-select: none;
         }
@@ -61,14 +65,15 @@
             justify-content: center;
             align-items: center;
             touch-action: manipulation;
+            cursor: pointer;
         }
         .btn:active {
             background: gold;
             color: black;
         }
 
-        /* Ocultar botones en PC (Dell Studio) */
-        @media (pointer: fine) {
+        /* Solo se ocultan si hay un mouse preciso Y la pantalla es grande */
+        @media (pointer: fine) and (min-width: 1024px) {
             #mobile-controls { display: none; }
         }
 
@@ -81,49 +86,52 @@
 </head>
 <body>
     <h1>Snake: Battle Royale</h1>
-    <div id="status">Conectando con el servidor...</div>
+    <div id="status">Conectando...</div>
     
     <canvas id="gameCanvas" width="800" height="600"></canvas>
     
     <div id="mobile-controls">
-        <div class="row">
-            <button class="btn" id="btn-up">▲</button>
-        </div>
+        <div class="row"><button class="btn" id="btn-up">▲</button></div>
         <div class="row">
             <button class="btn" id="btn-left">◀</button>
             <button class="btn" id="btn-right">▶</button>
         </div>
-        <div class="row">
-            <button class="btn" id="btn-down">▼</button>
-        </div>
+        <div class="row"><button class="btn" id="btn-down">▼</button></div>
     </div>
 
-    <div class="controls-hint">Usa WASD, Flechas o los botones táctiles</div>
+    <div class="controls-hint">Usa WASD, Flechas o los botones</div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="snake.js"></script>
 
     <script>
-        // Conexión para los botones móviles
-        // Usamos un intervalo pequeño para asegurar que socket.io ya cargó
-        const interval = setInterval(() => {
-            if (typeof socket !== 'undefined') {
-                const setupBtn = (id, dir) => {
-                    const btn = document.getElementById(id);
-                    btn.addEventListener('touchstart', (e) => {
+        function iniciarControles() {
+            // Buscamos el socket en el objeto window (global)
+            const s = window.socket || (typeof socket !== 'undefined' ? socket : null);
+            
+            if (s) {
+                console.log("🎮 Controles vinculados correctamente");
+                const configurar = (id, dir) => {
+                    const el = document.getElementById(id);
+                    const enviar = (e) => {
                         e.preventDefault();
-                        socket.emit('direction', dir);
-                    });
+                        s.emit('direction', dir);
+                    };
+                    // touchstart para cel, mousedown para probar en pc
+                    el.addEventListener('touchstart', enviar, {passive: false});
+                    el.addEventListener('mousedown', enviar);
                 };
 
-                setupBtn('btn-up', 'UP');
-                setupBtn('btn-down', 'DOWN');
-                setupBtn('btn-left', 'LEFT');
-                setupBtn('btn-right', 'RIGHT');
-                
-                clearInterval(interval);
+                configurar('btn-up', 'UP');
+                configurar('btn-down', 'DOWN');
+                configurar('btn-left', 'LEFT');
+                configurar('btn-right', 'RIGHT');
+            } else {
+                console.log("⌛ Esperando al motor del juego...");
+                setTimeout(iniciarControles, 500);
             }
-        }, 500);
+        }
+        iniciarControles();
     </script>
 </body>
 </html>
