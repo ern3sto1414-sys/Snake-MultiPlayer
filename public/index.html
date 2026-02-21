@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Snake Multiplayer - Ernesto Josiah</title>
+    <title>Snake Multiplayer</title>
     <style>
         body { 
             background: #0a0a0a; 
@@ -39,7 +39,7 @@
         }
 
         @media (max-width: 768px) {
-            canvas { max-height: 40vh; }
+            canvas { max-height: 42vh; }
         }
 
         #mobile-controls {
@@ -50,13 +50,12 @@
             margin-top: 10px;
             gap: 8px;
             user-select: none;
-            /* Forzamos que los botones reciban el toque */
             pointer-events: auto;
         }
         .row { display: flex; gap: 15px; }
         .btn {
-            width: 70px;
-            height: 70px;
+            width: 72px;
+            height: 72px;
             background: rgba(255, 215, 0, 0.2);
             border: 3px solid gold;
             border-radius: 50%;
@@ -65,18 +64,21 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            /* Crucial para móviles */
             touch-action: none;
             cursor: pointer;
             -webkit-tap-highlight-color: transparent;
+            position: relative;
+            z-index: 100;
         }
         .btn:active {
             background: gold;
             color: black;
+            transform: scale(0.95);
         }
 
         @media (pointer: fine) and (min-width: 1024px) {
             #mobile-controls { display: none; }
+            canvas { max-height: 80vh; }
         }
     </style>
 </head>
@@ -101,19 +103,23 @@
     <script>
         (function() {
             function iniciar() {
-                // Buscamos el socket en cualquier lugar (global o local)
-                const s = window.socket || (typeof socket !== 'undefined' ? socket : null);
+                // Buscamos la función que definimos en tu snake.js
+                const enviar = window.enviarMovimiento;
+                const s = window.socket;
                 
-                if (s && s.connected) {
+                if (enviar && s && s.connected) {
+                    console.log("🎮 Controles vinculados al motor de Josiah");
+                    
                     const configurar = (id, dir) => {
                         const el = document.getElementById(id);
                         
-                        // Pointerdown detecta tanto touch como mouse de forma nativa
                         const presionado = (e) => {
                             e.preventDefault();
-                            s.emit('direction', dir);
+                            // Usamos la función maestra para que respete el bloqueo de 180°
+                            window.enviarMovimiento(dir);
                         };
 
+                        // pointerdown es universal para touch y mouse
                         el.addEventListener('pointerdown', presionado, {passive: false});
                     };
 
@@ -122,12 +128,12 @@
                     configurar('btn-left', 'LEFT');
                     configurar('btn-right', 'RIGHT');
                     
-                    document.getElementById('status').innerText = "Arena Lista 24/7";
+                    document.getElementById('status').innerText = "¡Arena Lista, Ernesto!";
                 } else {
-                    setTimeout(iniciar, 200);
+                    // Si aún no carga el motor, reintentamos rápido
+                    setTimeout(iniciar, 100);
                 }
             }
-            // Iniciamos cuando el DOM esté listo
             window.addEventListener('load', iniciar);
         })();
     </script>
